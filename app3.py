@@ -1,19 +1,38 @@
 from flask import Flask, jsonify, request, render_template_string
+import json
+import os
 
 app = Flask(__name__)
 
-# Each API has its own independent message list
+# Message storage file
+DATA_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "messages.txt"
+)
+
+# Default messages for each API
 messages = {
     "hello1": ["Hello, World! from API 1: revise by Anjar"],
     "hello2": ["Hello, World! from API 2"],
     "hello3": ["Hello, World! from API 3"]
 }
 
+# Load existing messages from the text file
+if os.path.exists(DATA_FILE):
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        messages = json.load(f)
+
 API_NAMES = {
     "hello1": "API 1",
     "hello2": "API 2",
     "hello3": "API 3"
 }
+
+
+# Save all messages to one text file
+def save_messages():
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(messages, f, ensure_ascii=False, indent=2)
 
 
 # Dashboard web page
@@ -111,7 +130,8 @@ def dashboard():
                 try {
                     for (const api of ["hello1", "hello2", "hello3"]) {
                         const response = await fetch("/api/" + api);
-                        if (!response.ok) throw new Error("API request failed");
+                        if (!response.ok)
+                            throw new Error("API request failed");
 
                         const data = await response.json();
                         const list = document.getElementById(api);
@@ -123,6 +143,7 @@ def dashboard():
                             list.appendChild(item);
                         });
                     }
+
                     document.getElementById("status").textContent =
                         "All APIs connected successfully.";
                 } catch (error) {
@@ -146,7 +167,8 @@ def dashboard():
                     });
 
                     const data = await response.json();
-                    if (!response.ok) throw new Error(data.error);
+                    if (!response.ok)
+                        throw new Error(data.error || "Failed to add message");
 
                     input.value = "";
                     await loadMessages();
@@ -175,12 +197,24 @@ def handle_api(api):
     message = data.get("message")
 
     if not isinstance(message, str) or not message.strip():
-        return jsonify({"error": "A non-empty message is required"}), 400
+        return jsonify({
+            "error": "A non-empty message is required"
+        }), 400
 
     if len(message) > 500:
-        return jsonify({"error": "Message must be 500 characters or fewer"}), 400
+        return jsonify({
+            "error": "Message must be 500 characters or fewer"
+        }), 400
 
     messages[api].append(message.strip())
+
+    try:
+        save_messages()
+    except OSError:
+        messages[api].pop()
+        return jsonify({
+            "error": "Could not save message to file"
+        }), 500
 
     return jsonify({
         "api": API_NAMES[api],
