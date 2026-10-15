@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 # Each API has its own independent message list
 messages = {
-    "hello1": ["Hello, World! from API 1"],
+    "hello1": ["Hello, World! from API 1: revise by Anjar"],
     "hello2": ["Hello, World! from API 2"],
     "hello3": ["Hello, World! from API 3"]
 }
@@ -25,7 +25,7 @@ def dashboard():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Hello World API Dashboard</title>
+        <title>Hello World API Dashboard by Anjar</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
